@@ -23,8 +23,13 @@ public class ZookeeperRegisterDemo {
     String serviceName="user_register_service_pc";
     int connectionTimeout=30000;
     int sessionTimeout=2000;
+
+    /**
+     * 注册一个服务到zookeeper中
+     * @throws Exception
+     */
     @Test
-    public void server()throws Exception{
+    public void simpleServer()throws Exception{
         //zookeeper config
         ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
                 connectionTimeout, sessionTimeout, namespace);
@@ -39,8 +44,12 @@ public class ZookeeperRegisterDemo {
         server.online();
     }
 
+    /**
+     * 创建一个服务的client,并获取这个服务的所有可用主机列表
+     * @throws Exception
+     */
     @Test
-    public void client()throws Exception{
+    public void simpleClient()throws Exception{
         ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
                 connectionTimeout, sessionTimeout, namespace);
         ClientConfiguration config = new ClientConfiguration(zookeeperConfiguration, serviceName);
@@ -49,6 +58,10 @@ public class ZookeeperRegisterDemo {
         Collection<ServerInfo> list = client.getActiveServerInfoList();
     }
 
+    /**
+     * 注册一个服务到zookeeper中,并添加了一些定义的配置信息.
+     * @throws Exception
+     */
     @Test
     public void serverAndMoreServiceConfig()throws Exception{
         //zookeeper config
@@ -66,6 +79,11 @@ public class ZookeeperRegisterDemo {
         //注册到zookeeper
         server.online();
     }
+
+    /**
+     * 创建一个服务的client,并监听这些服务器的运行情况.
+     * @throws Exception
+     */
     @Test
     public void clientAndVerifyAndWatcher()throws Exception{
         ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
