@@ -23,16 +23,20 @@ public class ZookeeperRegisterDemo {
     String namespace="test_environment";
     //服务名,同一个服务名下可以注册多个节点
     String serviceName="user_register_service_pc";
+
     int connectionTimeout=30000;
+
     int sessionTimeout=2000;
     @Test
     public void server()throws Exception{
         //zookeeper config
         ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
                 connectionTimeout, sessionTimeout, namespace);
+
         //service config
         ServiceConfiguration serviceConfiguration = new ServiceConfiguration("192.168.1.3", "10080");
         //server config
+
         ServerManagerConfiguration serverManagerConfiguration = new ServerManagerConfiguration(
                 zookeeperConfiguration, serviceName, serviceConfiguration);
         //创建一个注册服务管理对象
