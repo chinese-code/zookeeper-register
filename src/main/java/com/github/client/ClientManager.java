@@ -1,7 +1,7 @@
 package com.github.client;
 
 import com.alibaba.fastjson.JSON;
-import com.github.server.JSONUtil;
+import com.github.utils.JSONUtil;
 import com.github.server.ServerInfo;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
