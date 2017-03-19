@@ -42,6 +42,9 @@ public class ZookeeperRegisterDemo {
         ServerManager server = new ServerManager(serverManagerConfiguration);
         //注册到zookeeper
         server.online();
+        while(true){
+            Thread.sleep(1000);
+        }
     }
 
     /**
@@ -56,6 +59,9 @@ public class ZookeeperRegisterDemo {
         ClientManager client = new ClientManager(config);
         //获取已注册的服务器列表
         Collection<ServerInfo> list = client.getActiveServerInfoList();
+        while(true){
+            Thread.sleep(1000);
+        }
     }
 
     /**
