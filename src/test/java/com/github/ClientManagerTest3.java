@@ -1,19 +1,18 @@
-package test;
+package com.github;
 
 import com.alibaba.fastjson.JSON;
-import com.github.client.ClientConfiguration;
-import com.github.client.ClientManager;
-import com.github.client.HostManager;
-import com.github.client.ServerEventWatcher;
-import com.github.server.ServerInfo;
+import com.github.client.*;
+import com.github.service.ServiceNodeData;
 import org.junit.Test;
 
 /**
- * Created by tumingjian on 2017/3/11.
+ * @author tumingjian
+ * @date 2018/3/5
+ * 说明:
  */
 public class ClientManagerTest3 {
     String connectString="172.18.0.221:2181,172.18.0.222:2181,172.18.0.223:2181";
-    String nameSpace="test";
+    String nameSpace= "test";
     String serviceName="zufangdai_pc";
     @Test
     public void test3()throws Exception{
@@ -24,24 +23,24 @@ public class ClientManagerTest3 {
             @Override
             public void run() {
                 ClientConfiguration config = new ClientConfiguration(connectString, 30000, 2000, nameSpace, serviceName);
-                ClientManager client = new ClientManager(config);
-                client.addWatcher(new ServerEventWatcher() {
+                ServiceClient client = new ServiceClient(config);
+                client.addWatcher(new ServiceHostEventWatcher() {
                     @Override
-                    public void online(HostManager manager, ServerInfo currentOnlineServer) {
+                    public void online(ActiveServerInfo activeServerInfo, ServerInfo currentOnlineServer) {
                         System.out.println(JSON.toJSONString(currentOnlineServer));
-                        System.out.println(JSON.toJSONString(manager.getActiveServerInfoList()));
+                        System.out.println(JSON.toJSONString(activeServerInfo.getActiveServers()));
                     }
 
                     @Override
-                    public void offline(HostManager manager, ServerInfo currentOfflineServer) {
+                    public void offline(ActiveServerInfo activeServerInfo, ServerInfo currentOfflineServer) {
                         System.out.println(JSON.toJSONString(currentOfflineServer));
-                        System.out.println(JSON.toJSONString(manager.getActiveServerInfoList()));
+                        System.out.println(JSON.toJSONString(activeServerInfo.getActiveServers()));
                     }
 
                     @Override
-                    public void update(HostManager manager, ServerInfo oldServerConfig, ServerInfo newServerConfig) {
+                    public void update(ActiveServerInfo activeServerInfo,ServerInfo oldServerConfig, ServerInfo newServerConfig) {
                         System.out.println(JSON.toJSONString(newServerConfig));
-                        System.out.println(JSON.toJSONString(manager.getActiveServerInfoList()));
+                        System.out.println(JSON.toJSONString(activeServerInfo.getActiveServers()));
                     }
                 });
             }

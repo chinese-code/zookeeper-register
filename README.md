@@ -11,7 +11,7 @@ https://github.com/tumingjian/zookeeper-register/blob/master/src/main/test/test/
     //curator-framework zookepper 命名空间
     String namespace="test_environment";
     //服务名,同一个服务名下可以注册多个节点
-    String serviceName="user_register_service_pc";
+    String servicePath="user_register_service_pc";
     int connectionTimeout=30000;
     int sessionTimeout=2000;
 
@@ -25,10 +25,10 @@ https://github.com/tumingjian/zookeeper-register/blob/master/src/main/test/test/
         ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
                 connectionTimeout, sessionTimeout, namespace);
         //service config
-        ServiceConfiguration serviceConfiguration = new ServiceConfiguration("192.168.1.3", "10080");
+        ServiceConfiguration serverData = new ServiceConfiguration("192.168.1.3", "10080");
         //server config
         ServerManagerConfiguration serverManagerConfiguration = new ServerManagerConfiguration(
-                zookeeperConfiguration, serviceName, serviceConfiguration);
+                zookeeperConfiguration, servicePath, serverData);
         //创建一个注册服务管理对象
         ServerManager server = new ServerManager(serverManagerConfiguration);
         //注册到zookeeper
@@ -43,7 +43,7 @@ https://github.com/tumingjian/zookeeper-register/blob/master/src/main/test/test/
     public void simpleClient()throws Exception{
         ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
                 connectionTimeout, sessionTimeout, namespace);
-        ClientConfiguration config = new ClientConfiguration(zookeeperConfiguration, serviceName);
+        ClientConfiguration config = new ClientConfiguration(zookeeperConfiguration, servicePath);
         ClientManager client = new ClientManager(config);
         //获取已注册的服务器列表
         Collection<ServerInfo> list = client.getActiveServerInfoList();

@@ -1,7 +1,7 @@
-package test;
+package com.github;
 
+import com.github.server.ServiceConfig;
 import com.github.utils.JSONUtil;
-import com.github.server.ServerInfo;
 import com.github.utils.convert.Converter;
 import org.junit.Test;
 
@@ -13,9 +13,9 @@ import java.util.Map;
 public class TestJsonConvert {
     @Test
     public void test1()throws Exception{
-        ServerInfo serverInfo = new ServerInfo(null, null, null, null, null);
+        ServiceConfig serverInfo = new ServiceConfig(null, null, null);
         String bytes="{\"namespace\":\"test\",\"serviceConfig\":{\"port\":\"8080\",\"ip\":\"2.2.2.2\",\"onlineTime\":\"1489311186969\"},\"serviceName\":\"zufangdai_pc\"}\n";
-        ServerInfo parse = JSONUtil.parse(bytes, ServerInfo.class);
+        ServiceConfig parse = JSONUtil.parse(bytes, ServiceConfig.class);
         System.out.println(parse);
     }
 

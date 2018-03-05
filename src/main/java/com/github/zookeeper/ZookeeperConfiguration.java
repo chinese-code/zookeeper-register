@@ -1,7 +1,9 @@
 package com.github.zookeeper;
 
 /**
- * Created by tumingjian on 2017/3/11.
+ * @author tumingjian
+ * @date 2018/3/5
+ * 说明:
  */
 public class ZookeeperConfiguration implements ZookeeperConfig {
     /**

@@ -4,16 +4,17 @@ import java.util.HashMap;
 
 /**
  * 服务配置信息,如果还想添加除了ip,port之外的其他信息,可以用put函数添加
- *
+ *@author tumingjian
  */
-public class ServiceConfiguration extends HashMap<String, Object> {
+public class ServiceNodeData extends HashMap<String, Object> {
     private final static String HOST_KEY = "ip";
     private final static String PORT_KEY = "port";
+    private final static String ONLINE_TIME="onlineTime";
     public String getHost() {
         return (String) get(HOST_KEY);
     }
 
-    public ServiceConfiguration() {
+    public ServiceNodeData() {
 
     }
 
@@ -22,9 +23,10 @@ public class ServiceConfiguration extends HashMap<String, Object> {
      * @param host
      * @param port
      */
-    public ServiceConfiguration(String host, String port) {
+    public ServiceNodeData(String host, String port) {
         this.put(HOST_KEY, host);
         this.put(PORT_KEY, port);
+        this.put(ONLINE_TIME,System.currentTimeMillis());
     }
 
     public void setHost(String host) {
@@ -43,14 +45,15 @@ public class ServiceConfiguration extends HashMap<String, Object> {
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == obj) return true;
-        if (obj instanceof ServiceConfiguration) {
-            ServiceConfiguration item = (ServiceConfiguration) obj;
+        if (obj instanceof ServiceNodeData) {
+            ServiceNodeData item = (ServiceNodeData) obj;
             if (item.getHost() == this.getHost() && item.getPort() == this.getPort()) {
                 return true;
             }
         }
         return false;
     }
+
 
 
 }

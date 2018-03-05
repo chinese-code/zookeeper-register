@@ -10,32 +10,32 @@ public class ClientConfiguration extends ZookeeperConfiguration {
     /**
      * 服务名
      */
-    private String serviceName;
-    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String serviceName) {
+    private String servicePath;
+    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String servicePath) {
         super(connectString, connectionTimeout, sessionTimeout, namespace);
-        this.serviceName = serviceName;
+        this.servicePath = servicePath;
     }
 
-    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String serviceName, ServerVerifyHandler serverVerifyHandler) {
-        this(connectString,connectionTimeout,sessionTimeout,namespace,serviceName);
+    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String servicePath, ServerVerifyHandler serverVerifyHandler) {
+        this(connectString,connectionTimeout,sessionTimeout,namespace, servicePath);
     }
 
-    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String serviceName, ServerVerifyHandler serverVerifyHandler) {
+    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String servicePath, ServerVerifyHandler serverVerifyHandler) {
         super(zookeeperConfig.getConnectString(),zookeeperConfig.getConnectionTimeout(),zookeeperConfig.getSessionTimeout(),zookeeperConfig.getNamespace());
-        this.serviceName = serviceName;
+        this.servicePath = servicePath;
     }
-    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String serviceName) {
-        this(zookeeperConfig,serviceName,null);
+    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String servicePath) {
+        this(zookeeperConfig, servicePath,null);
     }
     public ClientConfiguration() {
 
     }
 
-    public String getServiceName() {
-        return serviceName;
+    public String getServicePath() {
+        return servicePath;
     }
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
+    public void setServicePath(String servicePath) {
+        this.servicePath = servicePath;
     }
 }
