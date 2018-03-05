@@ -2,7 +2,6 @@ package com.github;
 
 import com.alibaba.fastjson.JSON;
 import com.github.client.*;
-import com.github.service.ServiceNodeData;
 import org.junit.Test;
 
 /**
@@ -23,24 +22,24 @@ public class ClientManagerTest3 {
             @Override
             public void run() {
                 ClientConfiguration config = new ClientConfiguration(connectString, 30000, 2000, nameSpace, serviceName);
-                ServiceClient client = new ServiceClient(config);
-                client.addWatcher(new ServiceHostEventWatcher() {
+                Client client = new Client(config);
+                client.addWatcher(new ServiceEventWatcher() {
                     @Override
-                    public void online(ActiveServerInfo activeServerInfo, ServerInfo currentOnlineServer) {
+                    public void online(ServiceWatchInvocation invoker, ServerInfo currentOnlineServer) {
                         System.out.println(JSON.toJSONString(currentOnlineServer));
-                        System.out.println(JSON.toJSONString(activeServerInfo.getActiveServers()));
+                        System.out.println(JSON.toJSONString(invoker.getActiveServerList()));
                     }
 
                     @Override
-                    public void offline(ActiveServerInfo activeServerInfo, ServerInfo currentOfflineServer) {
+                    public void offline(ServiceWatchInvocation invoker, ServerInfo currentOfflineServer) {
                         System.out.println(JSON.toJSONString(currentOfflineServer));
-                        System.out.println(JSON.toJSONString(activeServerInfo.getActiveServers()));
+                        System.out.println(JSON.toJSONString(invoker.getActiveServerList()));
                     }
 
                     @Override
-                    public void update(ActiveServerInfo activeServerInfo,ServerInfo oldServerConfig, ServerInfo newServerConfig) {
-                        System.out.println(JSON.toJSONString(newServerConfig));
-                        System.out.println(JSON.toJSONString(activeServerInfo.getActiveServers()));
+                    public void update(ServiceWatchInvocation invoker, ServerInfo oldServerInfo, ServerInfo newServerInfo) {
+                        System.out.println(JSON.toJSONString(newServerInfo));
+                        System.out.println(JSON.toJSONString(invoker.getActiveServerList()));
                     }
                 });
             }

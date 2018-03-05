@@ -10,32 +10,32 @@ public class ClientConfiguration extends ZookeeperConfiguration {
     /**
      * 服务名
      */
-    private String servicePath;
-    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String servicePath) {
+    private String servicePathList;
+    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String servicePathList) {
         super(connectString, connectionTimeout, sessionTimeout, namespace);
-        this.servicePath = servicePath;
+        this.servicePathList = servicePathList;
     }
 
-    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String servicePath, ServerVerifyHandler serverVerifyHandler) {
-        this(connectString,connectionTimeout,sessionTimeout,namespace, servicePath);
+    public ClientConfiguration(String connectString, int connectionTimeout, int sessionTimeout, String namespace, String servicePathList, ServerVerifyHandler serverVerifyHandler) {
+        this(connectString,connectionTimeout,sessionTimeout,namespace, servicePathList);
     }
 
-    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String servicePath, ServerVerifyHandler serverVerifyHandler) {
+    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String servicePathList, ServerVerifyHandler serverVerifyHandler) {
         super(zookeeperConfig.getConnectString(),zookeeperConfig.getConnectionTimeout(),zookeeperConfig.getSessionTimeout(),zookeeperConfig.getNamespace());
-        this.servicePath = servicePath;
+        this.servicePathList = servicePathList;
     }
-    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String servicePath) {
-        this(zookeeperConfig, servicePath,null);
+    public ClientConfiguration(ZookeeperConfig zookeeperConfig, String servicePathList) {
+        this(zookeeperConfig, servicePathList,null);
     }
     public ClientConfiguration() {
 
     }
 
-    public String getServicePath() {
-        return servicePath;
+    public String getServicePathList() {
+        return servicePathList;
     }
 
-    public void setServicePath(String servicePath) {
-        this.servicePath = servicePath;
+    public void setServicePathList(String servicePathList) {
+        this.servicePathList = servicePathList;
     }
 }

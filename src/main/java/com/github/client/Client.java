@@ -1,8 +1,6 @@
 package com.github.client;
 
 import com.alibaba.fastjson.JSON;
-import com.github.service.ServiceNodeData;
-import com.github.utils.JSONUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.CuratorWatcher;
@@ -14,13 +12,14 @@ import com.github.server.ServiceRegister;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author tumingjian
  * @date 2018/3/5
  * 说明:
  */
-public class ServiceClient implements ActiveServerInfo {
+public class Client {
     private static Logger logger = Logger.getLogger(ServiceRegister.class);
     /**
      * 客户端配置
@@ -29,7 +28,7 @@ public class ServiceClient implements ActiveServerInfo {
     /**
      * 当前活跃的主机列表
      */
-    private volatile Map<String, ServerInfo> activeServerMap = new HashMap<String, ServerInfo>();
+    private volatile Map<String, ConcurrentHashMap<String, ServerInfo>> activeServerMap = new HashMap<String, ConcurrentHashMap<String, ServerInfo>>();
     /**
      * com.github.zookeeper com.github.client
      */
@@ -37,13 +36,18 @@ public class ServiceClient implements ActiveServerInfo {
     /**
      * 服务的相应事件触发时,通知处理的handler列表
      */
-    private List<ServiceHostEventWatcher> eventHandlers = new ArrayList<ServiceHostEventWatcher>();
+    private List<ServiceEventWatcher> eventHandlers = new ArrayList<ServiceEventWatcher>();
     /**
      * 服务器验证处理者.
      */
     private ServerVerifyHandler serverVerifyHandler;
 
-    public ServiceClient(ClientConfiguration config) {
+    /**
+     * @param config
+     */
+    private Set<String> servicePathList = new HashSet<String>();
+
+    public Client(ClientConfiguration config) {
         /**
          * 初始化zookeeper client,并注册监听器
          */
@@ -56,6 +60,8 @@ public class ServiceClient implements ActiveServerInfo {
                 .connectString(config.getConnectString())
                 .sessionTimeoutMs(config.getSessionTimeout())
                 .connectionTimeoutMs(config.getConnectionTimeout()).build();
+        this.servicePathList = new HashSet<String>();
+        this.servicePathList.addAll(Arrays.asList(config.getServicePathList().split(";")));
         this.client.start();
         this.watch();
     }
@@ -72,8 +78,10 @@ public class ServiceClient implements ActiveServerInfo {
      */
     protected void watch() {
         activeServerMap = initServerMap();
-        InnerCuratorWatcher innerCuratorWatcher = new InnerCuratorWatcher(this);
-        watchNode(config.getServicePath(), client, innerCuratorWatcher);
+        for (String servicePath : servicePathList) {
+            InnerCuratorWatcher innerCuratorWatcher = new InnerCuratorWatcher(this,servicePath);
+            watchNode(servicePath, client, innerCuratorWatcher);
+        }
     }
 
     /**
@@ -81,7 +89,7 @@ public class ServiceClient implements ActiveServerInfo {
      *
      * @param watcher
      */
-    public void addWatcher(ServiceHostEventWatcher watcher) {
+    public void addWatcher(ServiceEventWatcher watcher) {
         eventHandlers.add(watcher);
     }
 
@@ -90,7 +98,7 @@ public class ServiceClient implements ActiveServerInfo {
      *
      * @param watcher
      */
-    public void removeWatcher(ServiceHostEventWatcher watcher) {
+    public void removeWatcher(ServiceEventWatcher watcher) {
         eventHandlers.remove(watcher);
     }
 
@@ -99,63 +107,67 @@ public class ServiceClient implements ActiveServerInfo {
      *
      * @return
      */
-    private Map<String, ServerInfo> initServerMap() {
-        HashMap<String, ServerInfo> map = new HashMap<String, ServerInfo>();
-        List<String> childs = retryGetChildren(config.getServicePath());
-        for (String child : childs) {
-            String path = config.getServicePath() + "/" + child;
-            try {
-                ServerInfo serverData = getServerInfo(path);
-                if (serverData != null) {
-                    if (this.serverVerifyHandler == null || this.serverVerifyHandler.verify(serverData)) {
-                        map.put(child, serverData);
+    private Map<String, ConcurrentHashMap<String, ServerInfo>> initServerMap() {
+        Map<String, ConcurrentHashMap<String, ServerInfo>> result = new HashMap<String, ConcurrentHashMap<String, ServerInfo>>();
+        for (String servicePath : servicePathList) {
+            List<String> childs = retryGetChildren(servicePath);
+            ConcurrentHashMap<String, ServerInfo> map = new ConcurrentHashMap<String, ServerInfo>();
+            for (String child : childs) {
+                String path = servicePath + "/" + child;
+                try {
+                    ServerInfo serverData = getServerInfo(path);
+                    if (serverData != null) {
+                        if (this.serverVerifyHandler == null || this.serverVerifyHandler.verify(serverData)) {
+                            map.put(child, serverData);
+                        } else {
+                            logger.error(MessageFormat.format("服务器未通过验证,path:{0},servicepath:{1}", path, JSON.toJSONString(serverData)));
+                        }
                     } else {
-                        logger.error(MessageFormat.format("服务器未通过验证,path:{0},serverconfig:{1}", path, JSON.toJSONString(serverData)));
+                        logger.error(MessageFormat.format("serverconfig is null,path:{0}", path));
                     }
-                } else {
-                    logger.error(MessageFormat.format("serverconfig is null,path:{0}", path));
+                } catch (Exception e) {
+                    logger.error(MessageFormat.format("add serverActiveList error,skip path:{0}", path));
                 }
-            } catch (Exception e) {
-                logger.error(MessageFormat.format("add serverActiveList error,skip path:{0}", path));
             }
+            result.put(servicePath, map);
         }
-        return map;
+        return result;
     }
 
     /**
      * 支持最大可重试3次来获取某个PATH下的所有子节点列表
      *
-     * @param path
+     * @param servicePath
      * @return
      */
-    private List<String> retryGetChildren(String path) {
+    private List<String> retryGetChildren(String servicePath) {
         for (int i = 0; i < 3; i++) {
             try {
-                List<String> list = this.client.getChildren().forPath(path);
+                List<String> list = this.client.getChildren().forPath(servicePath);
                 return list;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        throw new RuntimeException(MessageFormat.format("get children fail,path:{0}", path));
+        throw new RuntimeException(MessageFormat.format("get children fail,path:{0}", servicePath));
     }
 
     /**
      * 支持最大可重试3次来获取某个PATH上的数据
      *
-     * @param path
+     * @param servicePath
      * @return
      */
-    private byte[] retryGetDate(String path) {
+    private byte[] retryGetDate(String servicePath) {
         for (int i = 0; i < 3; i++) {
             try {
-                byte[] bytes = this.client.getData().forPath(path);
+                byte[] bytes = this.client.getData().forPath(servicePath);
                 return bytes;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        throw new RuntimeException(MessageFormat.format("get data fail,path:{0}", path));
+        throw new RuntimeException(MessageFormat.format("get data fail,path:{0}", servicePath));
     }
 
     /**
@@ -183,17 +195,21 @@ public class ServiceClient implements ActiveServerInfo {
      *
      * @return
      */
-    @Override
-    public Collection<ServerInfo> getActiveServers() {
-        return activeServerMap.values();
+    public Collection<ServerInfo> getActiveServers(String servicePath) {
+        ConcurrentHashMap<String, ServerInfo> service = activeServerMap.get(servicePath);
+        if (service != null) {
+            return service.values();
+        }
+        return null;
     }
-    @Override
-    public Map<String,ServerInfo> getActiveSeverMap(){
-        return activeServerMap;
+
+    public Map<String, ServerInfo> getActiveSeverMap(String servicePath) {
+        return activeServerMap.get(servicePath);
     }
-    @Override
-    public boolean isActiveServer() {
-        return !activeServerMap.isEmpty();
+
+    public boolean isActiveServer(String servicePath) {
+        if (activeServerMap.get(servicePath) == null) return false;
+        return !activeServerMap.get(servicePath).isEmpty();
     }
 
     /**
@@ -204,9 +220,9 @@ public class ServiceClient implements ActiveServerInfo {
     }
 
 
-    private ServerInfo getServerInfo(String path) {
-        byte[] bytes = retryGetDate(path);
-        ServerInfo serverInfo=JSON.parseObject(new String(bytes), ServerInfo.class);
+    private ServerInfo getServerInfo(String serviceNodePath) {
+        byte[] bytes = retryGetDate(serviceNodePath);
+        ServerInfo serverInfo = JSON.parseObject(new String(bytes), ServerInfo.class);
         return serverInfo;
     }
 
@@ -224,14 +240,22 @@ public class ServiceClient implements ActiveServerInfo {
      */
     private class InnerCuratorWatcher implements CuratorWatcher {
         final private String servicePath;
-        final private List<ServiceHostEventWatcher> handlers;
-        final private ServiceClient serviceClient;
+        final private List<ServiceEventWatcher> handlers;
+        final private Client serviceClient;
 
-        public InnerCuratorWatcher(ServiceClient serviceClient) {
+        public InnerCuratorWatcher(Client serviceClient, String servicePath) {
             this.serviceClient = serviceClient;
-            this.servicePath = config.getServicePath();
+            this.servicePath = servicePath;
             this.handlers = serviceClient.eventHandlers;
 
+        }
+
+        public ClientConfiguration getConfig() {
+            return config;
+        }
+
+        public List<ServiceEventWatcher> getEventHandlers() {
+            return eventHandlers;
         }
 
         /**
@@ -245,41 +269,49 @@ public class ServiceClient implements ActiveServerInfo {
             if (event.getType() == Watcher.Event.EventType.None) {
                 logger.info("Service监视器注册失败!");
             } else {
-                int subEndIndex=servicePath.length()+1;
+                int subEndIndex = servicePath.length() + 1;
                 String path = event.getPath();
                 logger.info("watchedEvent:" + event);
                 //server offline
                 if (event.getType() == Watcher.Event.EventType.NodeDeleted && path.contains(servicePath)) {
                     String child = path.substring(subEndIndex);
-                    ServerInfo serverInfo = activeServerMap.get(child);
-                    logger.info(MessageFormat.format("服务器离线,NODE:{0},info:{1}", child, JSON.toJSONString(serverInfo)));
-                    activeServerMap.remove(child);
+                    ServerInfo serverInfo = activeServerMap.get(servicePath).get(child);
+                    if(logger.isDebugEnabled()){
+                        logger.info(MessageFormat.format("服务器离线,NODE:{0},info:{1}", child, JSON.toJSONString(serverInfo)));
+                    }
+                    activeServerMap.get(path).remove(child);
                     if (handlers != null) {
-                        for (ServiceHostEventWatcher watcher : handlers) {
-                            watcher.offline(serviceClient, serverInfo);
+                        for (ServiceEventWatcher watcher : handlers) {
+                            ArrayList<ServerInfo> serverInfos = toArrayList();
+                            watcher.offline(new ServiceWatchInvocation(servicePath,serverInfos), serverInfo);
                         }
                     }
                     //server update
-                } else if (event.getType() == Watcher.Event.EventType.NodeDataChanged && !path.contains(servicePath)) {
+                } else if (event.getType() == Watcher.Event.EventType.NodeDataChanged && path.contains(servicePath)) {
                     String child = path.substring(subEndIndex);
-                    ServerInfo oldServerInfo = activeServerMap.get(child);
+                    ServerInfo oldServerInfo = activeServerMap.get(servicePath).get(child);
                     ServerInfo newServerInfo = getServerInfo(event.getPath());
                     //如果更新之后,服务器未通过验证,那么新的服务不会被添加到活跃列表,旧的服务依然会被移除,并触发离线事件.
                     if (serviceClient.serverVerifyHandler == null || serviceClient.serverVerifyHandler.verify(newServerInfo)) {
-                        activeServerMap.put(child, newServerInfo);
-                        logger.info(MessageFormat.format("服务器更新,NODE:{0},oldInfo:{1},newInfo:{2}", child, JSON.toJSONString(oldServerInfo), JSON.toJSONString(newServerInfo)));
+                        activeServerMap.get(servicePath).put(child, newServerInfo);
+                        if(logger.isDebugEnabled()){
+                            logger.debug(MessageFormat.format("服务器更新,NODE:{0},oldInfo:{1},newInfo:{2}", child, JSON.toJSONString(oldServerInfo), JSON.toJSONString(newServerInfo)));
+
+                        }
                         if (handlers != null) {
-                            for (ServiceHostEventWatcher watcher : handlers) {
-                                watcher.update(serviceClient, oldServerInfo, newServerInfo);
+                            for (ServiceEventWatcher watcher : handlers) {
+                                ArrayList<ServerInfo> serverInfos = toArrayList();
+                                watcher.update(new ServiceWatchInvocation(servicePath,serverInfos), oldServerInfo, newServerInfo);
                             }
                         }
                     } else {
                         logger.error(MessageFormat.format("服务器未通过验证,path:{0},serverconfig:{1}", event.getPath(), JSON.toJSONString(newServerInfo)));
-                        activeServerMap.remove(child);
-                        logger.info(MessageFormat.format("服务器离线,NODE:{0},info:{1}", child, JSON.toJSONString(newServerInfo)));
+                        activeServerMap.get(servicePath).remove(child);
+                        logger.debug(MessageFormat.format("服务器离线,NODE:{0},info:{1}", child, JSON.toJSONString(newServerInfo)));
                         if (handlers != null) {
-                            for (ServiceHostEventWatcher watcher : handlers) {
-                                watcher.offline(serviceClient, newServerInfo);
+                            for (ServiceEventWatcher watcher : handlers) {
+                                ArrayList<ServerInfo> serverInfos = toArrayList();
+                                watcher.offline(new ServiceWatchInvocation(servicePath,serverInfos), newServerInfo);
                             }
                         }
                     }
@@ -291,15 +323,18 @@ public class ServiceClient implements ActiveServerInfo {
                         if (activeServerMap.get(child) == null) {
                             //只有在通过验证时,服务才会加入活跃列表,并触发上线事件.
                             if (serviceClient.serverVerifyHandler == null || serviceClient.serverVerifyHandler.verify(serverInfo)) {
-                                activeServerMap.put(child, serverInfo);
-                                logger.info(MessageFormat.format("新服务器上线,NODE:{0},info:{1}", child, JSON.toJSONString(serverInfo)));
+                                activeServerMap.get(servicePath).put(child, serverInfo);
+                                if(logger.isDebugEnabled()){
+                                    logger.debug(MessageFormat.format("新服务器上线,NODE:{0},info:{1}", child, JSON.toJSONString(serverInfo)));
+                                }
                                 if (handlers != null) {
-                                    for (ServiceHostEventWatcher watcher : handlers) {
-                                        watcher.online(serviceClient, serverInfo);
+                                    for (ServiceEventWatcher watcher : handlers) {
+                                        ArrayList<ServerInfo> serverInfos = toArrayList();
+                                        watcher.online(new ServiceWatchInvocation(servicePath,serverInfos), serverInfo);
                                     }
                                 }
                             } else {
-                                logger.error(MessageFormat.format("服务器未通过验证,path:{0},serverconfig:{1}",servicePath + "/" + child, JSON.toJSONString(serverInfo)));
+                                logger.error(MessageFormat.format("服务器未通过验证,path:{0},serverconfig:{1}", servicePath + "/" + child, JSON.toJSONString(serverInfo)));
                             }
                         }
                     }
@@ -310,13 +345,13 @@ public class ServiceClient implements ActiveServerInfo {
              */
             watchNode(servicePath, client, this);
         }
+
+        private ArrayList<ServerInfo> toArrayList() {
+            Collection<ServerInfo> values = activeServerMap.get(servicePath).values();
+            ArrayList<ServerInfo> serverInfos = new ArrayList<ServerInfo>();
+            serverInfos.addAll(values);
+            return serverInfos;
+        }
     }
 
-    public ClientConfiguration getConfig() {
-        return config;
-    }
-
-    public List<ServiceHostEventWatcher> getEventHandlers() {
-        return eventHandlers;
-    }
 }
