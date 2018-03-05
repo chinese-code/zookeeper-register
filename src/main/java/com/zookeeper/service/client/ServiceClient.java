@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author tumingjian
@@ -29,7 +30,7 @@ public class ServiceClient {
     /**
      * 当前活跃的主机列表
      */
-    private volatile Map<String, ConcurrentHashMap<String, ServerInfo>> activeServerMap = new HashMap<>();
+    private volatile Map<String, ConcurrentHashMap<String, ServerInfo>> activeServerMap = new HashMap<String, ConcurrentHashMap<String, ServerInfo>>();
     /**
      * com.github.zookeeper com.github.client
      */
@@ -37,7 +38,7 @@ public class ServiceClient {
     /**
      * 服务的相应事件触发时,通知处理的handler列表
      */
-    private List<ServiceEventWatcher> eventHandlers = new ArrayList<>();
+    private List<ServiceEventWatcher> eventHandlers = new ArrayList<ServiceEventWatcher>();
     /**
      * 服务器验证处理者.
      */
@@ -46,7 +47,7 @@ public class ServiceClient {
     /**
      * @param clientConfig
      */
-    private Set<String> servicePathList = new HashSet<>();
+    private Set<String> servicePathList = new HashSet<String>();
     private static final int MAX_RETRY_TIMES = 3;
 
     public ServiceClient(ClientConfig clientConfig) {
@@ -62,8 +63,9 @@ public class ServiceClient {
                 .connectString(clientConfig.getConnectString())
                 .sessionTimeoutMs(clientConfig.getSessionTimeout())
                 .connectionTimeoutMs(clientConfig.getConnectionTimeout()).build();
-        this.servicePathList = new HashSet<>();
+        this.servicePathList = new HashSet<String>();
         this.servicePathList.addAll(Arrays.asList(clientConfig.getServicePathList().split(",")));
+        this.servicePathList= this.servicePathList.stream().map(i->i+"/host").collect(Collectors.<String>toSet());
         this.client.start();
         this.watch();
     }
@@ -100,7 +102,7 @@ public class ServiceClient {
                         String childNodeName = path.split("/")[path.split("/").length - 1];
                         if (type == PathChildrenCacheEvent.Type.CHILD_ADDED) {
                             if (activeServerMap.get(servicePath) == null) {
-                                ConcurrentHashMap<String, ServerInfo> newService = new ConcurrentHashMap<>(10);
+                                ConcurrentHashMap<String, ServerInfo> newService = new ConcurrentHashMap<String, ServerInfo>(10);
                                 activeServerMap.put(servicePath, newService);
                             }
                             //只有在通过验证时,服务才会加入活跃列表,并触发上线事件.
@@ -157,7 +159,7 @@ public class ServiceClient {
 
                 private ArrayList<ServerInfo> toArrayList() {
                     Collection<ServerInfo> values = activeServerMap.get(servicePath).values();
-                    ArrayList<ServerInfo> serverInfos = new ArrayList<>();
+                    ArrayList<ServerInfo> serverInfos = new ArrayList<ServerInfo>();
                     serverInfos.addAll(values);
                     return serverInfos;
                 }
@@ -190,10 +192,10 @@ public class ServiceClient {
      * @return
      */
     private Map<String, ConcurrentHashMap<String, ServerInfo>> initServerMap() {
-        Map<String, ConcurrentHashMap<String, ServerInfo>> result = new HashMap<>(10);
+        Map<String, ConcurrentHashMap<String, ServerInfo>> result = new HashMap<String, ConcurrentHashMap<String, ServerInfo>>(10);
         for (String servicePath : servicePathList) {
             List<String> childs = retryGetChildren(servicePath);
-            ConcurrentHashMap<String, ServerInfo> map = new ConcurrentHashMap<>(10);
+            ConcurrentHashMap<String, ServerInfo> map = new ConcurrentHashMap<String, ServerInfo>(10);
             for (String child : childs) {
                 String path = servicePath + "/" + child;
                 try {

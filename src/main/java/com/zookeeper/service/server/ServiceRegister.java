@@ -38,16 +38,16 @@ public class ServiceRegister {
     /**
      * 服务器配置
      */
-    private ServiceConfig serverInfo;
+    private ServiceConfig serviceConfig;
     private ServiceNodeData serverData;
     /**
      * 服务是否已上线.
      */
     private volatile boolean online = false;
 
-    public ServiceRegister(ZookeeperConfiguration config, ServiceConfig serverInfo, ServiceNodeData serverData) {
+    public ServiceRegister(ZookeeperConfiguration config, ServiceConfig serviceConfig, ServiceNodeData serverData) {
         this.zookeeperConfig = config;
-        this.serverInfo=serverInfo;
+        this.serviceConfig = serviceConfig;
         this.serverData=serverData;
         this.client = CuratorFrameworkFactory.builder()
                 .canBeReadOnly(false)
@@ -67,7 +67,7 @@ public class ServiceRegister {
         if (online) {
             throw new RuntimeException("当前服务已经在线,不能重复上线");
         }
-        String path = serverInfo.getPath();
+        String path = serviceConfig.getPath();
         String data = JSON.toJSONString(serverData);
         try {
             Stat stat = this.client.checkExists().forPath(path);
@@ -121,7 +121,7 @@ public class ServiceRegister {
     public void updateCurrent(ServiceNodeData serverData) {
         if (currentServerInfoNodeName != null && currentServerInfoPath != null) {
             try {
-                if (serverInfo.getServiceName().equals(serverInfo.getServiceName())) {
+                if (serviceConfig.getServiceName().equals(serviceConfig.getServiceName())) {
                     this.client.setData().forPath(currentServerInfoPath, JSON.toJSONString(serverData).getBytes("utf-8"));
                 } else {
                     throw new RuntimeException("新的serviceName和原有的serviceName不一致,无法更新服务器信息");
@@ -143,5 +143,8 @@ public class ServiceRegister {
     private ServiceNodeData getServerInfo(String path) throws Exception {
         byte[] bytes = this.client.getData().forPath(currentServerInfoPath);
         return JsonUtils.parse(new String(bytes,"utf-8"), ServiceNodeData.class);
+    }
+    public CuratorFramework getZKClient(){
+        return this.client;
     }
 }

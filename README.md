@@ -46,9 +46,9 @@ https://github.com/tumingjian/zookeeper-register/blob/master/src/test/java/com/z
          ZookeeperConfiguration zookeeperConfiguration = new ZookeeperConfiguration(connectString,
                  connectionTimeout, sessionTimeout, namespace);
          ServiceNodeData serverData = new ServiceNodeData(ip, port);
-         ServiceConfig serverInfo = new ServiceConfig(companyName, serviceLine, serviceName);
+         ServiceConfig serviceConfig = new ServiceConfig(companyName, serviceLine, serviceName);
          //创建一个注册服务管理对象
-         ServiceRegister server = new ServiceRegister(zookeeperConfiguration, serverInfo, serverData);
+         ServiceRegister server = new ServiceRegister(zookeeperConfiguration, serviceConfig, serverData);
          //注册到zookeeper
          server.online();
      }

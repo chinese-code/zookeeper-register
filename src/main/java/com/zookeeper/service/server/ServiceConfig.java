@@ -21,7 +21,7 @@ public class ServiceConfig {
      */
     private String serviceName;
     /**
-     * 服务器全路径=namespace+companyName+serviceLineName+serviceName;
+     * 服务器全路径=companyName+serviceLineName+serviceName+"/host";
      */
     private String path;
     /**
@@ -35,7 +35,7 @@ public class ServiceConfig {
         this.companyName = companyName;
         this.serviceLineName = serviceLineName;
         this.serviceName = serviceName;
-        this.path="/"+companyName+"/"+serviceLineName+"/"+serviceName;
+        this.path="/"+companyName+"/"+serviceLineName+"/"+serviceName+"/host";
     }
 
 
