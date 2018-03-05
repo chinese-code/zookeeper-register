@@ -44,18 +44,21 @@ public class ZookeeperServiceClientDemo {
         client.addWatcher(new ServiceEventWatcher() {
             public void online(ServiceWatchInvocation invoker, ServerInfo onlineServer) {
                 logger.info("servicePath:"+invoker.getServicePath());
+                logger.info("sequenceNode:"+invoker.getSequenceNode());
                 logger.info("服务器上线:"+JSON.toJSONString(onlineServer));
                 logger.info("info:"+JSON.toJSONString(invoker.getActiveServerList()));
             }
 
             public void offline(ServiceWatchInvocation invoker, ServerInfo offlineServer) {
                 logger.info("servicePath:"+invoker.getServicePath());
+                logger.info("sequenceNode:"+invoker.getSequenceNode());
                 logger.info("服务器离线:"+JSON.toJSONString(offlineServer));
                 logger.info("info:"+JSON.toJSONString(invoker.getActiveServerList()));
             }
 
             public void update(ServiceWatchInvocation invoker, ServerInfo oldServerInfo, ServerInfo newServerInfo) {
                 logger.info("servicePath:"+invoker.getServicePath());
+                logger.info("sequenceNode:"+invoker.getSequenceNode());
                 logger.info("服务器更新旧的:"+JSON.toJSONString(oldServerInfo));
                 logger.info("服务器更新新的:"+JSON.toJSONString(newServerInfo));
                 logger.info("info:"+JSON.toJSONString(invoker.getActiveServerList()));

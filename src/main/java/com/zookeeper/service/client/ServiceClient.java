@@ -105,14 +105,14 @@ public class ServiceClient {
                             }
                             //只有在通过验证时,服务才会加入活跃列表,并触发上线事件.
                             if (serverVerifyHandler == null || serverVerifyHandler.verify(eventServerInfo)) {
-                                activeServerMap.get(servicePath).put(path, eventServerInfo);
+                                activeServerMap.get(servicePath).put(childNodeName, eventServerInfo);
                                 if (logger.isDebugEnabled()) {
                                     logger.debug(MessageFormat.format("新服务器上线,NODE:{0},info:{1}", childNodeName, JSON.toJSONString(eventServerInfo)));
                                 }
                                 if (watchers != null) {
                                     for (ServiceEventWatcher watcher : watchers) {
                                         ArrayList<ServerInfo> serverInfos = toArrayList();
-                                        watcher.online(new ServiceWatchInvocation(servicePath, serverInfos), eventServerInfo);
+                                        watcher.online(new ServiceWatchInvocation(servicePath,childNodeName, serverInfos), eventServerInfo);
                                     }
                                 }
                             } else {
@@ -128,7 +128,7 @@ public class ServiceClient {
                             if (watchers != null) {
                                 for (ServiceEventWatcher watcher : watchers) {
                                     ArrayList<ServerInfo> serverInfos = toArrayList();
-                                    watcher.offline(new ServiceWatchInvocation(servicePath, serverInfos), serverInfo);
+                                    watcher.offline(new ServiceWatchInvocation(servicePath,childNodeName, serverInfos), serverInfo);
                                 }
                             }
                             //删除节点
@@ -145,7 +145,7 @@ public class ServiceClient {
                                 if (watchers != null) {
                                     for (ServiceEventWatcher watcher : watchers) {
                                         ArrayList<ServerInfo> serverInfos = toArrayList();
-                                        watcher.update(new ServiceWatchInvocation(servicePath, serverInfos), oldServerInfo, eventServerInfo);
+                                        watcher.update(new ServiceWatchInvocation(servicePath,childNodeName, serverInfos), oldServerInfo, eventServerInfo);
                                     }
                                 }
                             } else {

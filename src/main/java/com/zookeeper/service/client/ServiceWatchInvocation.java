@@ -10,6 +10,7 @@ import java.util.List;
  */
 public class ServiceWatchInvocation {
     private String servicePath;
+    private String sequenceNode;
     private List<ServerInfo> activeServerList;
 
     public String getServicePath() {
@@ -21,8 +22,13 @@ public class ServiceWatchInvocation {
         return activeServerList;
     }
 
-    public ServiceWatchInvocation(String servicePath, List<ServerInfo> activeServerList) {
+    public ServiceWatchInvocation(String servicePath,String sequenceNode, List<ServerInfo> activeServerList) {
         this.servicePath = servicePath;
+        this.sequenceNode=sequenceNode;
         this.activeServerList = activeServerList;
+    }
+
+    public String getSequenceNode() {
+        return sequenceNode;
     }
 }
