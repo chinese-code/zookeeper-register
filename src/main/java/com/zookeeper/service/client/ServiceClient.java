@@ -1,6 +1,7 @@
 package com.zookeeper.service.client;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
 import com.zookeeper.service.server.ServiceRegister;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -259,10 +260,10 @@ public class ServiceClient {
      *
      * @return
      */
-    public Collection<ServerInfo> getActiveServers(String servicePath) {
+    public List<ServerInfo> getActiveServers(String servicePath) {
         ConcurrentHashMap<String, ServerInfo> service = activeServerMap.get(servicePath);
         if (service != null) {
-            return service.values();
+            return Lists.newArrayList(service.values());
         }
         return null;
     }
