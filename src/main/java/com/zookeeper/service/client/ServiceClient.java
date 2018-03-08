@@ -2,6 +2,7 @@ package com.zookeeper.service.client;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
+import com.zookeeper.service.server.ServiceConfig;
 import com.zookeeper.service.server.ServiceRegister;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -50,7 +51,6 @@ public class ServiceClient {
      */
     private Set<String> servicePathList = new HashSet<String>();
     private static final int MAX_RETRY_TIMES = 3;
-
     public ServiceClient(ClientConfig clientConfig) {
         /**
          * 初始化zookeeper client,并注册监听器
@@ -66,7 +66,7 @@ public class ServiceClient {
                 .connectionTimeoutMs(clientConfig.getConnectionTimeout()).build();
         this.servicePathList = new HashSet<String>();
         this.servicePathList.addAll(Arrays.asList(clientConfig.getServicePathList().split(",")));
-        this.servicePathList= this.servicePathList.stream().map(i->i+"/host").collect(Collectors.<String>toSet());
+        this.servicePathList= this.servicePathList.stream().map(i->i+ ServiceConfig.SERVICE_HOST_NODE_NAME).collect(Collectors.<String>toSet());
         this.client.start();
         this.watch();
     }
@@ -261,6 +261,10 @@ public class ServiceClient {
      * @return
      */
     public List<ServerInfo> getActiveServers(String servicePath) {
+        //如果不是以/host结尾,那么添加结尾.
+        if(!ServiceConfig.SERVICE_HOST_NODE_NAME.equals(servicePath.substring(0,servicePath.length()-ServiceConfig.SERVICE_HOST_NODE_NAME.length()))){
+            servicePath+="/host";
+        }
         ConcurrentHashMap<String, ServerInfo> service = activeServerMap.get(servicePath);
         if (service != null) {
             return Lists.newArrayList(service.values());

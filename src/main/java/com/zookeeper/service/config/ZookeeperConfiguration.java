@@ -1,4 +1,4 @@
-package com.zookeeper.service.zookeeper;
+package com.zookeeper.service.config;
 
 /**
  * @author tumingjian

@@ -4,7 +4,7 @@ import com.zookeeper.service.server.ServiceConfig;
 import org.junit.Test;
 import com.zookeeper.service.server.ServiceNodeData;
 import com.zookeeper.service.server.ServiceRegister;
-import com.zookeeper.service.zookeeper.ZookeeperConfiguration;
+import com.zookeeper.service.config.ZookeeperConfiguration;
 
 /**
  * Created by tumingjian on 2017/3/11.

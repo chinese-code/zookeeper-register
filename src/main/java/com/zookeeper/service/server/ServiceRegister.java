@@ -2,7 +2,7 @@ package com.zookeeper.service.server;
 
 import com.alibaba.fastjson.JSON;
 import com.zookeeper.service.utils.JsonUtils;
-import com.zookeeper.service.zookeeper.ZookeeperConfiguration;
+import com.zookeeper.service.config.ZookeeperConfiguration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;

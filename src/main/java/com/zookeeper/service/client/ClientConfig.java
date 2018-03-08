@@ -1,7 +1,7 @@
 package com.zookeeper.service.client;
 
-import com.zookeeper.service.zookeeper.ZookeeperConfig;
-import com.zookeeper.service.zookeeper.ZookeeperConfiguration;
+import com.zookeeper.service.config.ZookeeperConfig;
+import com.zookeeper.service.config.ZookeeperConfiguration;
 
 /**
  * @author tumingjian

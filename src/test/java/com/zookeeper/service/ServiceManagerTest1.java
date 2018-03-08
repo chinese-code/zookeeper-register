@@ -2,7 +2,7 @@ package com.zookeeper.service;
 
 import com.zookeeper.service.server.ServiceConfig;
 import com.zookeeper.service.server.ServiceNodeData;
-import com.zookeeper.service.zookeeper.ZookeeperConfiguration;
+import com.zookeeper.service.config.ZookeeperConfiguration;
 import org.junit.Test;
 import com.zookeeper.service.server.ServiceRegister;
 
