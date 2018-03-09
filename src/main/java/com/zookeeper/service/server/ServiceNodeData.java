@@ -58,6 +58,9 @@ public class ServiceNodeData extends HashMap<String, Object> {
         return false;
     }
 
-
-
+    @Override
+    public int hashCode() {
+        int result = getHost().hashCode()>>3+getPort().hashCode()>>4;
+        return result;
+    }
 }
